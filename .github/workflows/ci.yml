@@ -48,6 +48,20 @@ jobs:
     - name: Run tests
       run: cargo test --all
 
+    - name: Test capnp-http feature flags
+      run: |
+          cargo test -p capnp-byte-stream
+          # Framework-agnostic core, with no framework adapter enabled.
+          cargo test -p capnp-http --no-default-features
+          # Each protocol / framework feature on its own (no hyper).
+          cargo test -p capnp-http --no-default-features --features websocket
+          cargo test -p capnp-http --no-default-features --features connect
+          cargo test -p capnp-http --no-default-features --features tower
+          # The hyper adapter suite.
+          cargo test -p capnp-http --features hyper
+          # Everything together (exercises the hyper + tower adapters side by side).
+          cargo test -p capnp-http --all-features
+
     - name: Run example
       run: ./target/debug/addressbook write | ./target/debug/addressbook read
 
@@ -127,7 +141,7 @@ jobs:
           cd ../
 
     - name: Run tests
-      run: cargo test -p capnp -p capnpc -p capnp-futures -p capnp-rpc
+      run: cargo test -p capnp -p capnpc -p capnp-futures -p capnp-rpc -p capnp-byte-stream -p capnp-http
 
   fmt:
     name: formatting
@@ -156,3 +170,10 @@ jobs:
       - uses: actions-rs-plus/clippy-check@v2
         with:
           args: --all --all-targets
+
+      # `--all-features` cannot be used workspace-wide (capnp has a
+      # nightly-feature-gated feature), so lint the optional capnp-http
+      # features (websocket, connect, tokio) in a separate scoped pass.
+      - uses: actions-rs-plus/clippy-check@v2
+        with:
+          args: -p capnp-byte-stream -p capnp-http --all-targets --all-features
