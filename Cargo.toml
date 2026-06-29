@@ -11,6 +11,7 @@ members = [
     "capnpc",
     "capnp-futures",
     "capnp-rpc",
+    "capnp-byte-stream",
 
     # testing and examples
     "async-byte-channel",
