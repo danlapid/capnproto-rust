@@ -1,0 +1,28 @@
+[package]
+name = "capnp-byte-stream"
+version = "0.26.0"
+authors = [ "David Renshaw <dwrenshaw@gmail.com>" ]
+license = "MIT"
+description = "adapters between the Cap'n Proto ByteStream RPC protocol and async byte streams"
+repository = "https://github.com/capnproto/capnproto-rust"
+documentation = "https://docs.rs/capnp-byte-stream/"
+categories = ["network-programming"]
+readme = "README.md"
+edition = "2021"
+rust-version.workspace = true
+
+[dependencies.futures]
+version = "0.3.0"
+default-features = false
+features = ["std"]
+
+[dependencies]
+capnp = { version = "0.26.0", path = "../capnp" }
+capnp-rpc = { version = "0.26.0", path = "../capnp-rpc" }
+
+[dev-dependencies]
+async-byte-channel = { path = "../async-byte-channel" }
+futures = { version = "0.3.0", features = ["std", "executor"] }
+
+[lints]
+workspace = true

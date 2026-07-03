@@ -1,0 +1,82 @@
+[package]
+name = "capnp-http"
+version = "0.26.0"
+authors = [ "David Renshaw <dwrenshaw@gmail.com>" ]
+license = "MIT"
+description = "http-over-capnp: framework-agnostic bridge between HTTP services and the Cap'n Proto HttpService RPC protocol, with optional hyper and tower/axum adapters"
+repository = "https://github.com/capnproto/capnproto-rust"
+documentation = "https://docs.rs/capnp-http/"
+categories = ["network-programming"]
+readme = "README.md"
+edition = "2021"
+rust-version.workspace = true
+
+[dependencies.futures]
+version = "0.3.0"
+default-features = false
+features = ["std"]
+
+[dependencies]
+capnp = { version = "0.26.0", path = "../capnp" }
+capnp-rpc = { version = "0.26.0", path = "../capnp-rpc" }
+capnp-byte-stream = { version = "0.26.0", path = "../capnp-byte-stream" }
+http = "1"
+http-body = "1"
+http-body-util = "0.1"
+bytes = "1"
+hyper = { version = "1", default-features = false, optional = true }
+tower = { version = "0.5", default-features = false, optional = true }
+tokio = { version = "1", default-features = false, features = ["rt"], optional = true }
+tungstenite = { version = "0.29", default-features = false, optional = true }
+# Note: the generated code in `src/http_over_capnp_capnp.rs` is committed (no
+# build.rs); regenerate it with `regenerate-http-over-capnp-schema-code.sh`.
+
+[features]
+# The core is HTTP-framework-agnostic: it depends only on the neutral `http` /
+# `http-body` / `bytes` interchange crates and its own `HttpService` trait. The
+# `hyper` adapter is on by default so existing users are unaffected; disable it
+# (`default-features = false`) for a hyper-free build and plug in another library
+# by implementing `HttpService` yourself.
+default = ["hyper"]
+# Bridges the local `HttpService` trait to the `hyper` ecosystem: a blanket impl
+# so any `hyper::service::Service` is accepted, plus the `HyperService` wrapper so
+# a `CapnpHttpService` (or any `HttpService`) can be used as a `hyper` service.
+hyper = ["dep:hyper"]
+# Bridges the local `HttpService` trait to the `tower` ecosystem via the
+# `TowerService` wrapper, so `tower` middleware stacks / `ServiceBuilder`,
+# `axum::Router`, `tonic`, etc. can be exposed over capnp.
+tower = ["dep:tower"]
+# Convenience: a `tokio::task::spawn_local`-based spawner for the client adapter.
+# The core is executor-agnostic and takes a spawner explicitly; this feature only
+# adds `tokio_local_spawn` for callers already using a tokio `LocalSet`.
+tokio = ["dep:tokio"]
+# WebSocket support, bridging the capnp `WebSocket` interface to
+# `tungstenite::Message` (compatible with `hyper-tungstenite` / `tokio-tungstenite`).
+websocket = ["dep:tungstenite"]
+# HTTP CONNECT tunnel support.
+connect = []
+
+[dev-dependencies]
+async-byte-channel = { path = "../async-byte-channel" }
+capnpc = { version = "0.26.0", path = "../capnpc" }
+futures = { version = "0.3.0", features = ["std", "executor"] }
+# Real hyper server + client for the integration suite.
+hyper = { version = "1", features = ["server", "client", "http1"] }
+hyper-util = { version = "0.1", features = ["tokio"] }
+tokio = { version = "1", default-features = false, features = ["rt", "net", "io-util", "macros", "time"] }
+tokio-util = { version = "0.7", features = ["compat"] }
+# For the `pluggable_frameworks` example: demonstrates tower + axum plugging into
+# the framework-agnostic core (no `hyper` feature required on capnp-http itself).
+tower = { version = "0.5", features = ["util", "limit"] }
+axum = { version = "0.8", default-features = false }
+
+[[example]]
+name = "inmemory_roundtrip"
+required-features = ["hyper"]
+
+[[example]]
+name = "pluggable_frameworks"
+required-features = ["tower"]
+
+[lints]
+workspace = true
